@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level-UP Life Quest</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <style>
+        :root {
+            --primary-red: #ff0000;
+            --primary-blue: #0000ff;
+            --primary-black: #000000;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(45deg, var(--primary-red), var(--primary-black));
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .user-profiles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .profile-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .tasks-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .task-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .task-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .task-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            gap: 15px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: var(--primary-blue);
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .timer-display {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .task-item {
+                grid-template-columns: 1fr auto;
+            }
+            
+            .task-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Level-UP Life Quest</h1>
+            <div id="clock" class="timer-display"></div>
+            <div id="resetCountdown" class="timer-display"></div>
+        </div>
+
+        <div class="user-profiles">
+            <div class="profile-card" id="jaeden-profile">
+                <div class="profile-header">
+                    <img src="https://www5.lunapic.com/do-not-link-here-use-hosting-instead/17383170326015954?95892880234" alt="Money symbol" class="profile-image">
+                    <h2>Jaeden</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Points</h3>
+                        <p id="jaeden-points">0</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Tasks</h3>
+                        <p id="jaeden-tasks">0/0</p>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div id="jaeden-progress" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="profile-card" id="dominic-profile">
+                <div class="profile-header">
+                    <img src="https://sprite.shimejis.xyz/directory/sponge-bob-square-pants-sponge-bob-by-sojia/img/shime1.png" alt="Spongebob" class="profile-image">
+                    <h2>Dominic</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3>Points</h3>
+                        <p id="dominic-points">0</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Tasks</h3>
+                        <p id="dominic-tasks">0/0</p>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div id="dominic-progress" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="task-controls">
+                <button onclick="showModal('addTaskModal')">Add Task</button>
+                <button onclick="showModal('pinModal')">Parent Controls</button>
+            </div>
+            <div id="taskList" class="task-list"></div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal">
+        <div class="modal-content">
+            <h2>Add New Task</h2>
+            <label>Task Name:</label>
+            <input type="text" id="taskName">
+            
+            <label>Duration (minutes):</label>
+            <select id="taskDuration">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="45">45</option>
+                <option value="60">60</option>
+            </select>
+
+            <label>Assign to:</label>
+            <select id="taskAssignee">
+                <option value="Jaeden">Jaeden</option>
+                <option value="Dominic">Dominic</option>
+                <option value="both">Both</option>
+            </select>
+
+            <label>Points:</label>
+            <input type="number" id="taskPoints" min="0" value="10">
+
+            <button onclick="addTask()">Add Task</button>
+            <button onclick="hideModal('addTaskModal')" style="background: var(--danger)">Cancel</button>
+        </div>
+    </div>
+
+    <!-- PIN Modal -->
+    <div id="pinModal" class="modal">
+        <div class="modal-content">
+            <h2>Enter PIN</h2>
+            <input type="password" id="pinInput" maxlength="4" placeholder="Enter 4-digit PIN">
+            <button onclick="verifyPin()">Submit</button>
+            <button onclick="hideModal('pinModal')" style="background: var(--danger)">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Core system state
+        const state = {
+            pin: '1234',
+            users: {
+                Jaeden: { points: 0, tasks: [], completed: 0 },
+                Dominic: { points: 0, tasks: [], completed: 0 }
+            },
+            lastReset: new Date(),
+            resetInterval: 6 * 24 * 60 * 60 * 1000 // 6 days in milliseconds
+        };
+
+        // Task management
+        function addTask() {
+            const name = document.getElementById('taskName').value;
+            const duration = parseInt(document.getElementById('taskDuration').value);
+            const assignee = document.getElementById('taskAssignee').value;
+            const points = parseInt(document.getElementById('taskPoints').value);
+
+            if (!name || points < 0) {
+                alert('Please fill all fields correctly');
+                return;
+            }
+
+            const task = {
+                id: Date.now(),
+                name,
+                duration,
+                points,
+                completed: false
+            };
+
+            if (assignee === 'both') {
+                state.users.Jaeden.tasks.push({...task});
+                state.users.Dominic.tasks.push({...task});
+            } else {
+                state.users[assignee].tasks.push(task);
+            }
+
+            updateTaskList();
+            hideModal('addTaskModal');
+            document.getElementById('taskName').value = '';
+        }
+
+        function completeTask(userId, taskId) {
+            const user = state.users[userId];
+            const task = user.tasks.find(t => t.id === taskId);
+            
+            if (task && !task.completed) {
+                task.completed = true;
+                user.points += task.points;
+                user.completed += 1;
+                updateUI();
+            }
+        }
+
+        // UI Updates
+        function updateTaskList() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            for (const [userId, user] of Object.entries(state.users)) {
+                const userTasks = document.createElement('div');
+                userTasks.innerHTML = `<h3>${userId}'s Tasks</h3>`;
+
+                user.tasks.forEach(task => {
+                    userTasks.innerHTML += `
+                        <div class="task-item" style="opacity: ${task.completed ? 0.7 : 1}">
+                            <span>${task.name}</span>
+                            <span>${task.duration} min</span>
+                            <span>${task.points} pts</span>
+                            <button onclick="completeTask('${userId}', ${task.id})" 
+                                    ${task.completed ? 'disabled' : ''}>
+                                ${task.completed ? 'Completed' : 'Complete'}
+                            </button>
+                        </div>
+                    `;
+                });
+
+                taskList.appendChild(userTasks);
+            }
+        }
+
+        function updateUI() {
+            for (const [userId, user] of Object.entries(state.users)) {
+                document.getElementById(`${userId.toLowerCase()}-points`).textContent = user.points;
+                document.getElementById(`${userId.toLowerCase()}-tasks`).textContent = 
+                    `${user.completed}/${user.tasks.length}`;
+                
+                const progress = user.tasks.length ? 
+                    (user.completed / user.tasks.length) * 100 : 0;
+                document.getElementById(`${userId.toLowerCase()}-progress`).style.width = 
+                    `${progress}%`;
+            }
+        }
+
+        // Timer functions
+        function updateClock() {
+            document.getElementById('clock').textContent = 
+                new Date().toLocaleTimeString();
+        }
+
+        function updateResetCountdown() {
+            const now = new Date();
+            const timeUntilReset = state.lastReset.getTime() + state.resetInterval - now.getTime();
+            
+            if (timeUntilReset <= 0) {
+                resetSystem();
+                return;
+            }
+
+            const days = Math.floor(timeUntilReset / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeUntilReset % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('resetCountdown').textContent = 
+                `Reset in: ${days}d ${hours}h ${minutes}m`;
+        }
+
+        // Modal handlers
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // PIN verification
+        function verifyPin() {
+            const enteredPin = document.getElementById('pinInput').value;
+            if (enteredPin === state.pin) {
+                hideModal('pinModal');
+                // Additional parent control options would go here
+            } else {
+                alert('Incorrect PIN');
+            }
+            document.getElementById('pinInput').value = '';
+        }
+
+        // System reset
+        function resetSystem() {
+            for (const user of Object.values(state.users)) {
+                user.tasks = [];
+                user.completed = 0;
+            }
+            state.lastReset = new Date();
+            updateUI();
+            updateTaskList();
+        }
+
+        // Initialize
+        setInterval(updateClock, 1000);
+        setInterval(updateResetCountdown, 1000);
+        updateClock();
+        updateResetCountdown();
+        updateUI();
+    </script>
+</body>
+</html>
